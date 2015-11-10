@@ -22,7 +22,7 @@ Signal.trap("TERM", &stop)
 
 sorted_files = Dir.glob("data/repos-*-*.json").sort_by do |filename|
   m = /data\/repos-(?<start>\d+)-\d+.json/.match filename
-  m[:start] unless m.nil?
+  m[:start].to_i unless m.nil?
 end
 last_filename = sorted_files.last
 if last_filename
