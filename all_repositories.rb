@@ -43,18 +43,18 @@ if @last_seen > 0
 end
 
 while true
-  response = HTTP.headers('user-agent' => 'github-user:za3k',
-      'Authorization' => 'token ' + ENV['GITHUB_TOKEN'])
-            .accept(:json)
-            .timeout(:connect => 5, :read => 5)
-            .get("https://api.github.com/repositories?since=#{@last_seen}")
+  begin
+    response = HTTP.headers('user-agent' => 'github-user:za3k',
+        'Authorization' => 'token ' + ENV['GITHUB_TOKEN'])
+              .accept(:json)
+              .timeout(:connect => 5, :read => 5)
+              .get("https://api.github.com/repositories?since=#{@last_seen}")
 
-  if response.code >= 300
-    @log.error "Error: #{response.code} #{response.reason}, \
-                header: #{response.headers}, \
-                response: #{response.body}"
-  else
-    begin
+    if response.code >= 300
+      @log.error "Error: #{response.code} #{response.reason}, \
+                  header: #{response.headers}, \
+                  response: #{response.body}"
+    else
       latest = Yajl::Parser.parse(response.to_s)
       ids = latest.collect(&@latest_key)
       new_repos = latest.reject { |e| @latest.include? @latest_key.call(e) }
@@ -82,11 +82,11 @@ while true
       @log.info "Found #{new_repos.size} new repos: #{new_repos.collect(&@repo_name)}, API: #{remaining}, reset: #{reset}"
 
       @last_seen = ids.last
-    rescue Exception => e
-      @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
-      @log.error "Response: #{response.code}, #{response.headers}, #{response.body}"
     end
-  end
-  sleep 2
-end
+  rescue Exception => e
+    @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
+    @log.error "Response: #{response.code}, #{response.headers}, #{response.body}"
+  ensure
     sleep 2
+  end
+end
