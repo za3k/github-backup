@@ -19,8 +19,27 @@ Signal.trap("TERM", &stop)
 @latest_key = lambda { |e| "#{e['id']}" }
 @repo_name = lambda { |e| "#{e['full_name']}" }
 @last_seen = 0
-unless ARGV.empty?
-  @last_seen = ARGV.shift.to_i
+
+sorted_files = Dir.glob("data/repos-*-*.json").sort_by do |filename|
+  m = /data\/repos-(?<start>\d+)-\d+.json/.match filename
+  m[:start] unless m.nil?
+end
+last_filename = sorted_files.last
+if last_filename
+  begin
+    last_seen = nil
+    Yajl::Parser.parse(File.new last_filename) do |json|
+      last_seen = json['id'].to_i
+    end
+    @last_seen = last_seen
+  rescue Exception => e
+    @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
+    @log.error "Error reading file #{last_filename} as JSON. Delete this file and try again."
+    exit 1
+  end
+end
+if @last_seen > 0
+  @log.info "Previous data found. Starting with repo ##{@last_seen}"
 end
 
 while true
