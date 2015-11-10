@@ -45,7 +45,7 @@ while true
         id = @latest_key.call(repo).to_i
         repo = repo['full_name']
         fbegin, fend = (id/10000).floor*10000, (id/10000 + 1).floor*10000
-        archive = "data/#{fbegin}-#{fend}.json"
+        archive = "data/repos-#{fbegin}-#{fend}.json"
 
         if @file.nil? || (archive != @file.to_path)
           if !@file.nil?
