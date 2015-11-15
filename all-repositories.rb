@@ -86,6 +86,7 @@ while true
         sleep (reset - Time.now)
       elsif new_repos.size < 3
         sleep 2
+      end
     end
   rescue Exception => e
     @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
