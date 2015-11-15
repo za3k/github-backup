@@ -77,7 +77,7 @@ while true
         @file.puts(Yajl::Encoder.encode(repo))
       end
 
-      remaining = response.headers['X-RateLimit-Remaining']
+      remaining = response.headers['X-RateLimit-Remaining'].to_i
       reset = Time.at(response.headers['X-RateLimit-Reset'].to_i)
       @log.info "Found #{new_repos.size} new repos: #{new_repos.collect(&@repo_name)}, API: #{remaining}, reset: #{reset}"
       @last_seen = ids.last
