@@ -80,13 +80,16 @@ while true
       remaining = response.headers['X-RateLimit-Remaining']
       reset = Time.at(response.headers['X-RateLimit-Reset'].to_i)
       @log.info "Found #{new_repos.size} new repos: #{new_repos.collect(&@repo_name)}, API: #{remaining}, reset: #{reset}"
-
       @last_seen = ids.last
+
+      if remaining < 500
+        sleep (reset - Time.now)
+      elsif new_repos.size < 3
+        sleep 2
     end
   rescue Exception => e
     @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
     @log.error "Response: #{response.code}, #{response.headers}, #{response.body}"
-  ensure
     sleep 2
   end
 end
