@@ -1,9 +1,9 @@
-all: data/xzs data/repos.txt data/repos.txt.xz
+all: data/gzs data/repos.txt data/repos.txt.gz
 %.txt: %.json
 	jq -r '.full_name' $< > $@
 %.gz: %
 	rm $@
-	gzip --keep $<
-data/xzs: $(patsubst %.json,%.json.xz,$(wildcard data/*.json))
+	gzip --keep -9 $<
+data/gzs: $(patsubst %.json,%.json.gz,$(wildcard data/*.json))
 data/repos.txt: $(patsubst %.json,%.txt,$(sort $(wildcard data/*.json)))
 	cat $^ > $@
