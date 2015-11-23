@@ -7,7 +7,7 @@ all: data/gzs data/repos.txt data/repos.txt.gz data/repos.json data/repos.json.g
 %.abbrev.json: %.json
 	jq -c '{id, full_name, fork}' $< >$@
 data/gzs: $(patsubst %.json,%.json.gz,$(wildcard data/*.json))
-data/repos.txt: $(patsubst %.json,%.txt,$(sort $(wildcard data/*.json)))
+data/repos.txt: $(patsubst %.json,%.txt,$(sort $(wildcard data/repos-*.json)))
 	find data -name 'repos-*.txt' | sort | while read f; do cat $$f; done >$@
-data/repos.json: $(patsubst %.short.json,%.txt,$(sort $(wildcard data/*.json)))
+data/repos.json: $(patsubst %.short.json,%.txt,$(sort $(wildcard data/repos-*.json)))
 	find data -name 'repos-*.abbrev.json' | sort | while read f; do cat $$f; done >$@
