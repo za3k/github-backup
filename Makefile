@@ -1,4 +1,4 @@
-all: data/gzs data/repos.txt data/repos.txt.gz
+all: data/gzs data/repos.txt data/repos.txt.gz data/repos.json data/repos.json.gz
 %.txt: %.json
 	jq -r '.full_name' $< > $@
 %.gz: %
