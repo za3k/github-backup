@@ -77,9 +77,16 @@ while true
         @file.puts(Yajl::Encoder.encode(repo))
       end
 
+      if ids.last.to_i < @last_seen.to_i then
+        ni = File.new("nonincreasing", "a+")
+        puts("#{@last_seen} went to #{ids.last}")
+        ni.close
+        exit 2
+      end
+
       remaining = response.headers['X-RateLimit-Remaining'].to_i
       reset = Time.at(response.headers['X-RateLimit-Reset'].to_i)
-      @log.info "Found #{new_repos.size} new repos: #{new_repos.collect(&@repo_name)}, API: #{remaining}, reset: #{reset}"
+      @log.info "Found #{new_repos.size} new repos: #{new_repos.collect(&@repo_name)}, API: #{remaining}, reset: #{reset}, last_seen: #{ids.last}"
       @last_seen = ids.last
 
       if remaining < 500
