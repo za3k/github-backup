@@ -62,7 +62,7 @@ while true
       @latest = ids
       new_repos.each do |repo|
         id = @latest_key.call(repo).to_i
-        fbegin, fend = (id/10000).floor*10000, (id/10000 + 1).floor*10000
+        fbegin, fend = (id/10000).floor*10000, (id/10000).floor*10000 + 9999
         archive = "data/repos-#{fbegin}-#{fend}.json"
 
         if @file.nil? || (archive != @file.to_path)
