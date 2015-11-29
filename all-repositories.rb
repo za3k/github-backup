@@ -77,7 +77,7 @@ while true
         @file.puts(Yajl::Encoder.encode(repo))
       end
 
-      if ids.last.to_i < @last_seen.to_i then
+      if ids.last and ids.last.to_i < @last_seen.to_i then
         ni = File.new("nonincreasing", "a+")
         puts("#{@last_seen} went to #{ids.last}")
         ni.close
