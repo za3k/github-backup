@@ -87,7 +87,7 @@ while true
       remaining = response.headers['X-RateLimit-Remaining'].to_i
       reset = Time.at(response.headers['X-RateLimit-Reset'].to_i)
       @log.info "Found #{new_repos.size} new repos: #{new_repos.collect(&@repo_name)}, API: #{remaining}, reset: #{reset}, last_seen: #{ids.last}"
-      @last_seen = ids.last
+      @last_seen = ids.last if ids.last
 
       if remaining < 500
         sleep (reset - Time.now)
