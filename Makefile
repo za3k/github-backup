@@ -9,4 +9,4 @@ data/gzs: $(patsubst %.json,%.json.gz,$(wildcard data/repos-*.json))
 data/repos.txt: $(patsubst %.json,%.txt,$(sort $(wildcard data/repos-*.json)))
 	find data -name 'repos-*.txt' | sort | while read f; do cat $$f; done >$@
 data/repos.json: $(patsubst %.json,%.json.abbrev,$(sort $(wildcard data/repos-*.json)))
-	find data -name 'repos-*.json.abbrev | sort | while read f; do cat $$f; done >$@
+	find data -name 'repos-*.json.abbrev' | sort | while read f; do cat $$f; done >$@
