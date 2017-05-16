@@ -20,26 +20,40 @@ Signal.trap("TERM", &stop)
 @repo_name = lambda { |e| "#{e['full_name']}" }
 @last_seen = 0
 
-sorted_files = Dir.glob("data/repos-*-*.json").sort_by do |filename|
-  m = /data\/repos-(?<start>\d+)-\d+.json/.match filename
+sorted_files = Dir.glob("data/repos-*-*{.json.gz,.json}").sort_by do |filename|
+  m = /data\/repos-(?<start>\d+)-\d+\.json(?:\.gz)?/.match filename
   m[:start].to_i unless m.nil?
 end
 last_filename = sorted_files.last
 if last_filename
-  begin
+  if last_filename.end_with? ".gz"
     last_seen = nil
-    Yajl::Parser.parse(File.new last_filename) do |json|
-      last_seen = json['id'].to_i
+    puts "Skipping last file because it is an archive, #{last_filename}"
+    m = /data\/repos-(?<start>\d+)-(?<end>\d+)\.json(?:\.gz)?/.match last_filename
+    last_seen = m[:end].to_i unless m.nil?
+    if last_seen.nil? then
+      @log.error "Could not find next record after #{last_filename} (filename parse error)."
+      exit(1)
     end
     @last_seen = last_seen
-  rescue Exception => e
-    @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
-    @log.error "Error reading file #{last_filename} as JSON. Delete this file and try again."
-    exit 1
+  else
+    begin
+      last_seen = nil
+      puts "Resuming previous JSON file, #{last_filename}"
+      Yajl::Parser.parse(File.new last_filename) do |json|
+        last_seen = json['id'].to_i
+      end
+      @last_seen = last_seen
+    rescue Exception => e
+      @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
+      @log.error "Error reading file #{last_filename} as JSON. Delete this file and try again."
+      exit(1)
+    end
   end
 end
 if @last_seen > 0
   @log.info "Previous data found. Starting with repo ##{@last_seen}"
+  latest = [@last_seen]
 end
 
 while true
@@ -64,13 +78,25 @@ while true
         id = @latest_key.call(repo).to_i
         fbegin, fend = (id/10000).floor*10000, (id/10000).floor*10000 + 9999
         archive = "data/repos-#{fbegin}-#{fend}.json"
+        archive_gzip = "data/repos-#{fbegin}-#{fend}.json.gz"
 
         if @file.nil? || (archive != @file.to_path)
           if !@file.nil?
             @log.info "Rotating archive. Current: #{@file.to_path}, New: #{archive}"
+            [archive, archive_gzip].each do |path|
+              if File.exist? path
+                @log.error "Error: We want to rotate to #{archive}, but it already exists."
+                exit 1
+              end
+            end
+            if File.exist? "#{@file.to_path}.gz"
+              @log.error "Error: We want to gzip #{file.to_path} -> #{file.to_path}.gz, but that exists"
+              exit 1
+            end
             @file.close
+            @log.info "Gzipping archive #{@file.to_path}"
+            `gzip #{@file.to_path}`
           end
-
           @file = File.new(archive, "a+")
         end
     
@@ -97,7 +123,11 @@ while true
     end
   rescue Exception => e
     @log.error "Processing exception: #{e}, #{e.backtrace.first(5)}"
-    @log.error "Response: #{response.code}, #{response.headers}, #{response.body}"
+    begin
+      @log.error "Response: #{response.code}, #{response.headers}, #{response.body}"
+    rescue Exception => e2
+      @log.error "Nesting processing exception: #{e}"
+    end
     sleep 2
   end
 end

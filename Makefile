@@ -1,12 +1,11 @@
-all: data/gzs data/repos.txt.gz data/repos.json.gz
-%.txt: %.json
-	jq -r '.full_name' $< > $@
+all: data/repos.txt.gz data/repos.json.gz
+%.txt: %.json.gz
+	zcat $< | jq -r '.full_name' > $@
 %.gz: %
 	gzip -c -9 $< >$@
-%.json.abbrev: %.json
-	jq -c '{id, full_name, fork, description}' $< >$@
-data/gzs: $(patsubst %.json,%.json.gz,$(wildcard data/repos-*.json))
-data/repos.txt: $(patsubst %.json,%.txt,$(sort $(wildcard data/repos-*.json)))
+%.json.abbrev.gz: %.json.gz
+	zcat $< | jq -c '{id, full_name, fork, description}' | gzip >$@
+data/repos.txt: $(patsubst %.json.gz,%.txt,$(sort $(wildcard data/repos-*.json.gz)))
 	find data -name 'repos-*.txt' | sort | while read f; do cat $$f; done >$@
-data/repos.json: $(patsubst %.json,%.json.abbrev,$(sort $(wildcard data/repos-*.json)))
-	find data -name 'repos-*.json.abbrev' | sort | while read f; do cat $$f; done >$@
+data/repos.json.gz: $(patsubst %.json.gz,%.json.abbrev.gz,$(sort $(wildcard data/repos-*.json.gz)))
+	find data -name 'repos-*.json.abbrev.gz' | sort | while read f; do zcat $$f; done | gzip >$@
